@@ -118,6 +118,11 @@ class UserModel(Base):
         nullable=True
     )
     
+    is_profile_completed: Mapped[bool] = mapped_column(
+            Boolean,
+            default=False
+        )
+    
     profile: Mapped["ProfileModel"] = relationship(
         "ProfileModel",
         back_populates="user",
