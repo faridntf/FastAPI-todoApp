@@ -15,6 +15,8 @@ class UserBase(BaseModel):
     username: str = Field(
         min_length=3,
         max_length=50,
+        examples="Farid_123",
+        description="The username must contain at least one uppercase letter, one lowercase letter, and one number, and be longer than 8 characters.",
         pattern=r"^[a-zA-Z0-9_]+$"
     )
     
@@ -23,7 +25,7 @@ class UserBase(BaseModel):
     phone_number: Optional[str] = Field(
         default=None,
         max_length=20,
-        pattern=r"^\+?[0-9]{10,15}$"
+        pattern=r"^09\d{9}$"
     )
     
     
@@ -90,12 +92,19 @@ class UserCreateSc(UserBase):
 class UserUpdateSc(BaseModel):
     email: EmailStr = Field(default=None)
     
-    phone_number: Optional[str] = Field(
+    phone_number: str = Field(
             default=None,
             max_length=20,
-            pattern=r"^\+?[0-9]{10,15}$"
+            pattern=r"^09\d{9}$"
         )
     
+    
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number(cls, value):
+        if value is None:
+            raise ValueError("phone_number cannot be null")
+        return value
     
     @field_validator("email")
     @classmethod
@@ -103,6 +112,8 @@ class UserUpdateSc(BaseModel):
         if value is None:
             raise ValueError("email cannot be null")
         return value
+    
+    
 
     model_config = ConfigDict(
         str_strip_whitespace=True,
