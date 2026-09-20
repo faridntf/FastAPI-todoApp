@@ -15,7 +15,7 @@ class UserBase(BaseModel):
     username: str = Field(
         min_length=3,
         max_length=50,
-        examples="Farid_123",
+        examples=["Farid_123"],
         description="The username must contain at least one uppercase letter, one lowercase letter, and one number, and be longer than 8 characters.",
         pattern=r"^[a-zA-Z0-9_]+$"
     )
@@ -155,5 +155,24 @@ class UserChangePassword(BaseModel):
     
     
     model_config = ConfigDict(
+        extra="forbid"
+    )
+    
+    
+class UserLoginSc(BaseModel):
+    identifier: str = Field(
+        min_length=3,
+        max_length=250,
+        examples=["Farid_123", "farid@example.com", "09123456789"],
+        description="Username, email, or phone number"
+    )
+
+    password: str = Field(
+        min_length=1,
+        max_length=128
+    )
+
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
         extra="forbid"
     )

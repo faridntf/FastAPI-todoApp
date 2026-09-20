@@ -1,3 +1,5 @@
+from .userRouter import router as user_router
+
 from .models import(
     UserModel,
     ProfileModel
@@ -6,7 +8,8 @@ from .models import(
 from .userSchema import(
     UserResponseSc,
     UserCreateSc,
-    UserUpdateSc
+    UserUpdateSc,
+    UserLoginSc
 )
 
 from .profSchema import(

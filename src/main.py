@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
+from users import user_router
+
 #add my routs
 
 
@@ -41,3 +43,5 @@ app = FastAPI(lifespan=lifespan,
 
 
 #included routs app
+
+app.include_router(user_router)
