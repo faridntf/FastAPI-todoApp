@@ -1,4 +1,11 @@
-from fastapi import APIRouter,Depends,status,HTTPException
+from fastapi import(
+    APIRouter,
+    Depends,
+    status,
+    HTTPException,
+    Security,
+    Response
+)
 
 from core import get_db
 
@@ -9,8 +16,12 @@ from .userService import check_user_duplicates,find_user
 from .userSchema import(
     UserCreateSc,
     UserResponseSc,
-    UserLoginSc
 )
+
+from fastapi.security import OAuth2PasswordRequestForm
+from .auth import create_access_token
+from .auth.jwt_auth import set_coookie
+
 
 router = APIRouter(
     prefix="/users",
@@ -33,14 +44,33 @@ def create_user(data : UserCreateSc, db: Session = Depends(get_db)):
         db.rollback()
 
 
-@router.post("/login",response_model=UserResponseSc)
-def login_user(identifier:UserLoginSc, db : Session = Depends(get_db)):
-    user = find_user(identifier.identifier,db)
+@router.post("/login")
+def login_user(response:Response,identifier:OAuth2PasswordRequestForm = Depends(), db : Session = Depends(get_db)):
+    user = find_user(identifier.username,db)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="username or email or phone number or password is incorrect")
+        
     verify_password = user.verify_password(identifier.password)
     if verify_password == False:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="username or email or phone number or password is incorrect")
-    return user
+        
+    if user.is_active == False:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                                    detail="this account is not active")
+    if user.is_delete == True:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="account has deleted")
+    access_token = create_access_token(user.id)
+    set_coookie("access_token",access_token,response=response)
+    return "login successfully"
+
+
+
+from fastapi import Request
+@router.post("/logout")
+def logout_account(requ : Request,response:Response):
+    print(requ.cookies)
+    response.delete_cookie(key="access_token",path="/")
+    return "Logout successfully"

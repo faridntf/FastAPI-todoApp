@@ -1,7 +1,10 @@
-from fastapi import HTTPException,status
+from fastapi import HTTPException,status,Security,Depends,Cookie
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import and_
 from .models import UserModel
+from jwt import ExpiredSignatureError,InvalidTokenError
+from core import get_db
+from .auth.jwt_auth import decode_token
 
 def check_user_duplicates(db: Session, data):
     username_exists = (
@@ -40,7 +43,7 @@ def check_user_duplicates(db: Session, data):
             detail="phone number already exists"
         )
 
-def find_user(identifier,db:Session):
+def find_user(identifier,db:Session) -> None:
     
     if "@" in identifier:
         user = db.query(UserModel).where(
@@ -64,4 +67,55 @@ def find_user(identifier,db:Session):
             UserModel.is_active == True
         ).one_or_none()
         return user
-    
+
+def get_current_user(
+    token: str | None = Cookie(default=None),
+    db: Session = Depends(get_db),
+):
+    if token is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Please login your account"
+        )
+    try:
+        user_id = decode_token(token)
+        
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid access token"
+            )
+        
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access token is expired",
+        )
+        
+    except InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid access token",
+        )
+        
+    user = (
+        db.query(UserModel)
+        .filter(UserModel.id == user_id)
+        .one_or_none()
+    )
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid access token",
+        )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive user",
+        )
+    if user.is_delete:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="this account is deleted cannot access",
+            )
+    return user

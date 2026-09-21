@@ -1,5 +1,4 @@
 from .userRouter import router as user_router
-
 from .models import(
     UserModel,
     ProfileModel
@@ -17,3 +16,5 @@ from .profSchema import(
     ProfileResponseSc,
     ProfileUpdateSc
 )
+
+from .userService import get_current_user
