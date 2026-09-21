@@ -6,6 +6,7 @@ from fastapi import(
     Security,
     Response
 )
+from fastapi.exceptions import ResponseValidationError
 
 from core import get_db
 
@@ -40,7 +41,7 @@ def create_user(data : UserCreateSc, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(new_user)
         return new_user
-    except:
+    except ResponseValidationError:
         db.rollback()
 
 

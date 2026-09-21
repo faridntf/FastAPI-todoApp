@@ -1,10 +1,17 @@
-from fastapi import HTTPException,status,Security,Depends,Cookie
+from fastapi import HTTPException,status,Security,Depends
+from fastapi.security import APIKeyCookie
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import and_
 from .models import UserModel
 from jwt import ExpiredSignatureError,InvalidTokenError
 from core import get_db
 from .auth.jwt_auth import decode_token
+
+
+cookie_scheme = APIKeyCookie(
+    name="access_token",
+    auto_error=False
+)
 
 def check_user_duplicates(db: Session, data):
     username_exists = (
@@ -33,7 +40,7 @@ def check_user_duplicates(db: Session, data):
 
     phone_exist = (
             db.query(UserModel)
-            .filter(UserModel.username == data.username)
+            .filter(UserModel.phone_number == data.phone_number)
             .first()
         )
     
@@ -69,16 +76,16 @@ def find_user(identifier,db:Session) -> None:
         return user
 
 def get_current_user(
-    token: str | None = Cookie(default=None),
+    access_token: str | None = Security(cookie_scheme),
     db: Session = Depends(get_db),
 ):
-    if token is None:
+    if access_token is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Please login your account"
         )
     try:
-        user_id = decode_token(token)
+        user_id = decode_token(access_token)
         
     except ValueError:
         raise HTTPException(
