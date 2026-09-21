@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-
-from users import user_router
-
-#add my routs
-
+from fastapi_swagger import patch_fastapi
+from users import (
+    user_router,
+    profile_router
+)
 
 
 @asynccontextmanager
@@ -38,10 +38,14 @@ app = FastAPI(lifespan=lifespan,
                   "name" : "farid najafi",
                   "url" : "https://faridnajafi.ir",
                   "email" : "exam@gmail.com"
-              }
+              },
+              docs_url=None,
+              swagger_ui_oauth2_redirect_url=None
               )
+patch_fastapi(app,docs_url="/swagger")
 
 
 #included routs app
 
 app.include_router(user_router)
+app.include_router(profile_router)
