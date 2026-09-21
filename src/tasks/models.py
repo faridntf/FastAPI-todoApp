@@ -78,9 +78,20 @@ class TaskModel(Base):
         nullable=True
     )
     
+    category_id_fk : Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("tblCategory.id")
+    )
+    
     user = relationship(
         "UserModel",
         back_populates="tasks",
+    )
+    
+    category = relationship(
+        "CategoriesModel",
+        backref="categorys",
+        uselist=False
     )
     
     def soft_delete(self) -> None:

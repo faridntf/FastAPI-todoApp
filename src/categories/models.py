@@ -41,7 +41,7 @@ class CategoriesModel(Base):
     parent: Mapped[CategoriesModel] = relationship(
         "CategoriesModel",
         back_populates="children",
-        remote_side=lambda: [CategoriesModel.cat_id],
+        remote_side=lambda: [CategoriesModel.id],
     )
     
     children: Mapped[list[CategoriesModel]] = relationship(
