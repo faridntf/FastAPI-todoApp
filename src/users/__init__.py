@@ -2,7 +2,8 @@ from .userRouter import router as user_router
 from .profileRouter import router as profile_router
 from .models import(
     UserModel,
-    ProfileModel
+    ProfileModel,
+    EnUserRole
 )
 
 from .userSchema import(

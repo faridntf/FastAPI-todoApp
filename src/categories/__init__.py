@@ -4,3 +4,4 @@ from .schema import (
     CategoryResponseSC,
     CategoryUpdateSc
 )
+from categories.routs import router as category_router

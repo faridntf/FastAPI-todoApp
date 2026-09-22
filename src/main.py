@@ -5,6 +5,7 @@ from users import (
     user_router,
     profile_router
 )
+from categories import category_router
 
 
 @asynccontextmanager
@@ -46,6 +47,6 @@ patch_fastapi(app,docs_url="/swagger")
 
 
 #included routs app
-
+app.include_router(category_router)
 app.include_router(user_router)
 app.include_router(profile_router)
