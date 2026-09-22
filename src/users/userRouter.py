@@ -4,21 +4,25 @@ from fastapi import(
     status,
     HTTPException,
     Security,
-    Response
+    Response,
+    Request
 )
-from fastapi.exceptions import ResponseValidationError
 
-from core import get_db
+from .userService import(
+    check_user_duplicates,
+    find_user
+)
 
-from sqlalchemy.orm import Session
-from sqlalchemy.sql import or_
-from .models import UserModel
-from .userService import check_user_duplicates,find_user
 from .userSchema import(
     UserCreateSc,
     UserResponseSc,
 )
 
+from fastapi.exceptions import ResponseValidationError
+from core import get_db
+from sqlalchemy.orm import Session
+from sqlalchemy.sql import or_
+from .models import UserModel
 from fastapi.security import OAuth2PasswordRequestForm
 from .auth import create_access_token
 from .auth.jwt_auth import set_coookie
@@ -44,7 +48,6 @@ def create_user(data : UserCreateSc, db: Session = Depends(get_db)):
     except ResponseValidationError:
         db.rollback()
 
-
 @router.post("/login")
 def login_user(response:Response,identifier:OAuth2PasswordRequestForm = Depends(), db : Session = Depends(get_db)):
     user = find_user(identifier.username,db)
@@ -67,11 +70,7 @@ def login_user(response:Response,identifier:OAuth2PasswordRequestForm = Depends(
     set_coookie("access_token",access_token,response=response)
     return "login successfully"
 
-
-
-from fastapi import Request
 @router.post("/logout")
 def logout_account(requ : Request,response:Response):
-    print(requ.cookies)
     response.delete_cookie(key="access_token",path="/")
     return "Logout successfully"

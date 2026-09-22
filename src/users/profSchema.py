@@ -11,17 +11,11 @@ from datetime import date
 from .models import EnGender
 
 
-
-
-
-
 class ProfileBaseSc(BaseModel):
     bio: Optional[str] = Field(
         default=None,
         max_length=1000
     )
-    
-    profile_url: Optional[HttpUrl] = None
     
     national_id: Optional[str] = Field(
         default=None,
@@ -57,28 +51,51 @@ class ProfileBaseSc(BaseModel):
         max_length=1000
     )
     
+    
+    
+    @field_validator("first_name", "last_name")
+    @classmethod
+    def check_names(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+
+        if any(char.isdigit() for char in value):
+            raise ValueError("")
+
+        return value
+
+
+    @field_validator("national_id", mode="before")
+    @classmethod
+    def check_nid(cls, value):
+        if value is None:
+            return None
+
+        if not isinstance(value, str):
+            raise ValueError("کد ملی باید به‌صورت رشته ارسال شود.")
+
+        value = value.strip()
+
+        if not value.isascii() or not value.isdigit():
+            raise ValueError("کد ملی باید فقط شامل ارقام انگلیسی باشد.")
+
+        if len(value) != 10:
+            raise ValueError("کد ملی باید دقیقاً ۱۰ رقم باشد.")
+
+        return value
+
+    
+    
+    
     model_config = ConfigDict(
         str_strip_whitespace=True,
         extra="forbid"
     )
 
 class ProfileCreateSc(ProfileBaseSc):
-    first_name: str = Field(
-            default=None,
-            min_length=2,
-            max_length=50
-        )
-        
-    last_name: str = Field(
-        default=None,
-        min_length=2,
-        max_length=50
-    )
-    
-    national_id: str = Field(
-        default=None,
-        pattern=r"^\d{10}$"
-    )
+    first_name: str = Field(min_length=2, max_length=50)
+    last_name: str = Field(min_length=2, max_length=50)
+    national_id: str = Field(pattern=r"^[0-9]{10}$")
     
 class ProfileUpdateSc(ProfileBaseSc):
     pass
