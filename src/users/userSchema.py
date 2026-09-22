@@ -8,7 +8,7 @@ from pydantic import(
 )
 from typing import Optional
 from datetime import datetime
-from .models import EnUserRole
+from .models import EnUserRole, enum_values
 
 
 class UserBase(BaseModel):
@@ -47,6 +47,14 @@ class UserResponseSc(UserBase):
     is_verified : bool
     
     is_profile_completed : bool
+    
+    
+    @field_validator("role")
+    @classmethod
+    def validate_role(cls, v: str) -> str:
+        if v not in enum_values(EnUserRole):
+            raise ValueError(f"The status must be one of the following states: {enum_values(EnUserRole)}")
+        return v
     
     
     model_config = ConfigDict(

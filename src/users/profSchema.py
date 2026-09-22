@@ -6,9 +6,14 @@ from pydantic import(
     field_validator,
     HttpUrl
 )
+
+from .models import (
+    EnGender,
+    enum_values
+)
+
 from typing import Optional
 from datetime import date
-from .models import EnGender
 
 
 class ProfileBaseSc(BaseModel):
@@ -83,7 +88,13 @@ class ProfileBaseSc(BaseModel):
             raise ValueError("کد ملی باید دقیقاً ۱۰ رقم باشد.")
 
         return value
-
+    
+    @field_validator("gender")
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        if v not in enum_values(EnGender):
+            raise ValueError(f"The status must be one of the following states: {enum_values(EnGender)}")
+        return v
     
     
     
