@@ -132,6 +132,14 @@ class UserModel(Base):
         lazy="joined"
     )
     
+    tasks_user: Mapped[list["TaskModel"]] = relationship(
+            "TaskModel",
+            back_populates="user_task",
+            uselist=True,
+            cascade="all,delete-orphan",
+            single_parent=True,
+        )
+    
     def __repr__(self) -> str:
         return f"<User(id={self.id}, username='{self.username}', role={self.role})>"
     

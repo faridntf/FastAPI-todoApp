@@ -83,9 +83,9 @@ class TaskModel(Base):
         ForeignKey("tblCategory.id")
     )
     
-    user = relationship(
+    user_task = relationship(
         "UserModel",
-        back_populates="tasks",
+        back_populates="tasks_user",
     )
     
     category = relationship(

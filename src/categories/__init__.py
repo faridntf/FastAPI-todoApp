@@ -5,3 +5,8 @@ from .schema import (
     CategoryUpdateSc
 )
 from categories.routs import router as category_router
+
+from .services import (
+    category_exists_id,
+    category_exists_name
+)
