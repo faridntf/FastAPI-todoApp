@@ -16,9 +16,11 @@ from core import Base
 from sqlalchemy import ForeignKey
 from enum import Enum
 from datetime import date
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from pwdlib import PasswordHash
 
+if TYPE_CHECKING: # hengam ejraye barname be loop mikhordm ke bekhatere hamin in ravesh ro jaygozin kardm
+    from tasks.models import TaskModel
 
 
 def enum_values(enum_class: type[Enum]) -> list[str]:
