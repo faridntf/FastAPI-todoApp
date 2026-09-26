@@ -5,7 +5,7 @@ from fastapi import(
     HTTPException,
     Security,
     Response,
-    Request
+    Cookie
 )
 
 from .userService import(
@@ -71,6 +71,8 @@ def login_user(response:Response,identifier:OAuth2PasswordRequestForm = Depends(
     return "login successfully"
 
 @router.post("/logout")
-def logout_account(requ : Request,response:Response):
+def logout_account(response:Response,token : str | None = Cookie(default=None,alias="access_token"),):
+    if not token:
+        raise HTTPException(detail="Please log in to the system first.",status_code=status.HTTP_401_UNAUTHORIZED)
     response.delete_cookie(key="access_token",path="/")
     return "Logout successfully"
