@@ -11,6 +11,12 @@ from .schema import(
     CategoryUpdateSc
 )
 
+from .services import (
+    get_all,
+    find_category_by_id,
+    find_category_by_name
+)
+
 from .models import CategoriesModel
 from core import get_db
 from sqlalchemy.orm import Session
@@ -54,7 +60,7 @@ def create_new_category(
 def get_all_categories(
     db:Session = Depends(get_db),
 ):
-    all_category = db.query(CategoriesModel).all()
+    all_category =  get_all(db=db)
     if not all_category:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="list is empty, please create first category.")
     return all_category
@@ -87,7 +93,7 @@ def delete_category_by_id(cat_id:int, db:Session = Depends(get_db), current_user
     if not current_user.role == EnUserRole.ADMIN:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="guest and users members cannot access")
     else:
-        category = db.query(CategoriesModel).filter(CategoriesModel.id == cat_id).one_or_none()
+        category = find_category_by_id(db=db,cat_id=cat_id)
         if not category:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -105,7 +111,8 @@ def delete_category_by_name(cat_name: str, db:Session = Depends(get_db), current
     if not current_user.role == EnUserRole.ADMIN:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="guest and users members cannot access")
     else:
-        category = db.query(CategoriesModel).filter(CategoriesModel.name == cat_name).one_or_none()
+        category = find_category_by_name(db=db,cat_name = cat_name)
+        
         if not category:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -116,4 +123,3 @@ def delete_category_by_name(cat_name: str, db:Session = Depends(get_db), current
         db.delete(category)
         db.commit()
         raise HTTPException(status_code=status.HTTP_204_NO_CONTENT)
-

@@ -48,3 +48,9 @@ class CategoriesModel(Base):
         "CategoriesModel",
         back_populates="parent",
     )
+    
+    def __str__(self) -> str:
+        return {
+            "id" : self.id,
+            "name" : self.name
+        }
