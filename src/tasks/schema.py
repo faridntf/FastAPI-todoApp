@@ -60,7 +60,21 @@ class TaskCreateSc(TaskBase):
         str_strip_whitespace=True,
         extra="forbid"
     )
-
+    
+class TaskMarkCompleted(BaseModel):
+    is_completed : bool = Field(default=True)
+    
+    model_config = ConfigDict(
+        extra="forbid"
+    )
+    
+class GetAllUsersTasks(BaseModel):
+    id: int
+    title: str
+    grading: EnTaskGrading
+    created_at : datetime
+    is_completed : bool
+    user_id_fk : int
 
 class TaskUpdateSc(TaskBase):
     

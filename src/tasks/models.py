@@ -96,4 +96,3 @@ class TaskModel(Base):
     
     def soft_delete(self) -> None:
             self.is_delete = True
-            self.deleted_at = func.now()

@@ -5,7 +5,6 @@ from .models import(
     ProfileModel,
     EnUserRole
 )
-from .models import UserModel
 
 from .userSchema import(
     UserResponseSc,
