@@ -16,8 +16,6 @@ from pathlib import Path
 
 MAX_FILE_SIZE = 1*1024*1024
 MAX_PIXELS = 1100000
-MAX_WIDTH = 1000
-MAX_HEIGHT = 1000
 ALLOWED_FORMATS = {
     ".jpg": "JPEG",
     ".jpeg": "JPEG",
@@ -78,10 +76,10 @@ def upload_avatar(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="The submitted photo is not valid."
             )
-        filename = f"{current_user_id}_{uuid4().hex}.jpg"
+        filename = f"{current_user_id}_{uuid4().hex}.png"
         destination = BASE_DIR.parent.parent/"uploads"/ "profiles" / filename
         try:
-            BASE_DIR.mkdir(parents=True, exist_ok=True)
+            destination.parent.mkdir(parents=True, exist_ok=True)
 
             with destination.open("xb") as target:
                 try:
@@ -109,10 +107,16 @@ def delete_old_profile_avatar(
             old_path.unlink(missing_ok=True)
 
 def duplicate_data_NID(
-    data : int,
-    db : Session
+    data: str | None,
+    db: Session,
+    exclude_profile_id: int | None = None,
 ):
-    national_id_exist = db.query(ProfileModel).filter(ProfileModel.national_id == data).one_or_none()
+    if data is None:
+        return
+    query = db.query(ProfileModel).filter(ProfileModel.national_id == data)
+    if exclude_profile_id is not None:
+        query = query.filter(ProfileModel.id != exclude_profile_id)
+    national_id_exist = query.one_or_none()
     
     if national_id_exist:
         raise HTTPException(

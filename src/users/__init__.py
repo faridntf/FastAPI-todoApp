@@ -3,7 +3,7 @@ from .profileRouter import router as profile_router
 from .models import(
     UserModel,
     ProfileModel,
-    EnUserRole
+    EnUserRole,
 )
 
 from .userSchema import(

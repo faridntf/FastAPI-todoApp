@@ -9,6 +9,9 @@ class Setting(BaseSettings):
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_SECRET_KEY : str
+    COOKIE_SECURE: bool = True
+    AUTH_ALLOWED_ORIGINS: list[str] = []
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",

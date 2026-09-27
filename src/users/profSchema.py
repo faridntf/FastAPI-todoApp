@@ -43,7 +43,7 @@ class ProfileBaseSc(BaseModel):
     
     gender: Optional[EnGender] = None
     
-    website: Optional[HttpUrl] = None
+    website: Optional[HttpUrl] = Field(default=None, max_length=200)
     
     postal_code: Optional[str] = Field(
         default=None,
@@ -65,7 +65,7 @@ class ProfileBaseSc(BaseModel):
             return None
 
         if any(char.isdigit() for char in value):
-            raise ValueError("")
+            raise ValueError("Names cannot contain digits")
 
         return value
 
@@ -92,6 +92,8 @@ class ProfileBaseSc(BaseModel):
     @field_validator("gender")
     @classmethod
     def validate_status(cls, v: str) -> str:
+        if v is None:
+            return None
         if v not in enum_values(EnGender):
             raise ValueError(f"The status must be one of the following states: {enum_values(EnGender)}")
         return v

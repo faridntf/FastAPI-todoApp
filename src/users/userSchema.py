@@ -11,12 +11,15 @@ from datetime import datetime
 from .models import EnUserRole, enum_values
 
 
+class RefreshRequestSc(BaseModel):
+    refresh_token: str
+
 class UserBase(BaseModel):
     username: str = Field(
         min_length=3,
         max_length=50,
         examples=["Farid_123"],
-        description="The username must contain at least one uppercase letter, one lowercase letter, and one number, and be longer than 8 characters.",
+        description="Use 3 to 50 letters, numbers or underscores.",
         pattern=r"^[a-zA-Z0-9_]+$"
     )
     
@@ -29,8 +32,13 @@ class UserBase(BaseModel):
     )
     
     
+    @field_validator("username", "email", "phone_number", mode="before")
+    @classmethod
+    def strip_identity(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
     model_config = ConfigDict(
-        str_strip_whitespace=True
+        str_strip_whitespace=False
     )
     
 class UserResponseSc(UserBase):
@@ -93,7 +101,7 @@ class UserCreateSc(UserBase):
     
     model_config = ConfigDict(
         from_attributes=True,
-        str_strip_whitespace=True,
+        str_strip_whitespace=False,
         extra="forbid"
     )
     
@@ -124,7 +132,7 @@ class UserUpdateSc(BaseModel):
     
 
     model_config = ConfigDict(
-        str_strip_whitespace=True,
+        str_strip_whitespace=False,
         extra="forbid"
     )
     
@@ -181,6 +189,6 @@ class UserLoginSc(BaseModel):
     )
 
     model_config = ConfigDict(
-        str_strip_whitespace=True,
+        str_strip_whitespace=False,
         extra="forbid"
     )

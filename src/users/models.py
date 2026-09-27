@@ -4,7 +4,9 @@ from sqlalchemy import (
     DateTime,
     Boolean,
     Enum as SqlEnum,
-    Text
+    Text,
+    Index,
+    text
 )
 from sqlalchemy.orm import (
     Mapped,
@@ -15,9 +17,10 @@ from sqlalchemy.sql import func
 from core import Base
 from sqlalchemy import ForeignKey
 from enum import Enum
-from datetime import date
+from datetime import date,timezone,timedelta,datetime
 from typing import TYPE_CHECKING, Optional
 from pwdlib import PasswordHash
+from core import setting
 
 if TYPE_CHECKING: # hengam ejraye barname be loop mikhordm ke bekhatere hamin in ravesh ro jaygozin kardm
     from tasks.models import TaskModel
@@ -86,7 +89,7 @@ class UserModel(Base):
     
     role: Mapped[EnUserRole] = mapped_column(
         SqlEnum(EnUserRole, values_callable=enum_values),
-        default=EnUserRole.GUEST,
+        default=EnUserRole.USER,
         nullable=False,
         server_default=EnUserRole.USER.value
     )
@@ -244,3 +247,55 @@ class ProfileModel(Base):
         if self.first_name and self.last_name:
             return f"{self.first_name} {self.last_name}"
         return self.first_name or self.last_name or ""
+
+
+class RefreshToken(Base):
+    __tablename__ = "tblRefreshToken"
+
+
+    id : Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        index=True,
+        autoincrement=True
+    )
+
+    token : Mapped[str] = mapped_column(
+        String,
+        unique= True
+    )
+
+    user_id_fk : Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("tblUsers.id")
+    )
+
+    expire_at : Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=lambda : datetime.now(timezone.utc) + timedelta(minutes=setting.REFRESH_TOKEN_EXPIRE_MINUTES))
+
+
+class AuthSession(Base):
+    __tablename__ = "tblAuthSessions"
+    __table_args__ = (
+        Index("uq_auth_session_active_user", "user_id_fk", unique=True,
+              postgresql_where=text("revoked_at IS NULL"),
+              sqlite_where=text("revoked_at IS NULL")),
+    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id_fk: Mapped[int] = mapped_column(ForeignKey("tblUsers.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    csrf_hash: Mapped[str] = mapped_column(String(64))
+
+
+class RefreshCredential(Base):
+    __tablename__ = "tblRefreshCredentials"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    session_id: Mapped[str] = mapped_column(ForeignKey("tblAuthSessions.id"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    consumed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    replaced_by_id: Mapped[Optional[str]] = mapped_column(String(36))

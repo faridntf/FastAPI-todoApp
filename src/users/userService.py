@@ -1,11 +1,10 @@
-from fastapi import HTTPException,status,Security,Depends
-from fastapi.security import APIKeyCookie
+from fastapi import HTTPException, status, Security, Depends, Request, Header
+from .auth.session_service import authenticate
+from fastapi.security import APIKeyCookie, HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import and_
+from sqlalchemy import or_
 from .models import UserModel
-from jwt import ExpiredSignatureError,InvalidTokenError
 from core import get_db
-from .auth.jwt_auth import decode_token
 
 
 cookie_scheme = APIKeyCookie(
@@ -38,6 +37,9 @@ def check_user_duplicates(db: Session, data):
             detail="Email already exists"
         )
 
+    if data.phone_number is None:
+        return
+
     phone_exist = (
             db.query(UserModel)
             .filter(UserModel.phone_number == data.phone_number)
@@ -50,79 +52,25 @@ def check_user_duplicates(db: Session, data):
             detail="phone number already exists"
         )
 
-def find_user(identifier,db:Session) -> None:
-    
-    if "@" in identifier:
-        user = db.query(UserModel).where(
-            and_(
-                UserModel.email == identifier,
-                UserModel.is_active == True
-            )
-        ).one_or_none()
-        return user
-    
-    elif identifier.startswith("09") and identifier.isdigit():
-        user = db.query(UserModel).where(
-            UserModel.phone_number == identifier,
-            UserModel.is_active == True
-        ).one_or_none()
-        return user
-    
-    else:
-        user = db.query(UserModel).where(
-            UserModel.username == identifier,
-            UserModel.is_active == True
-        ).one_or_none()
-        return user
+def find_user(identifier,db:Session) -> UserModel | None:
+    users = db.query(UserModel).filter(or_(
+        UserModel.username == identifier,
+        UserModel.email == identifier,
+        UserModel.phone_number == identifier,
+    )).limit(2).all()
+    if len(users) > 1:
+        # A username can equal another account's phone number. Never guess.
+        raise HTTPException(400, "Ambiguous login identifier; please use your email")
+    return users[0] if users else None
+
+bearer_scheme = HTTPBearer(auto_error=False)
+
 
 def get_current_user(
-    access_token: str | None = Security(cookie_scheme),
+    request: Request,
     db: Session = Depends(get_db),
+    access_token: str | None = Security(cookie_scheme),
+    authorization: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+    csrf_token: str | None = Header(default=None, alias="X-CSRF-Token"),
 ):
-    if access_token is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Please login your account"
-        )
-    try:
-        user_id = decode_token(access_token)
-        
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid access token"
-            )
-        
-    except ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Access token is expired",
-        )
-        
-    except InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid access token",
-        )
-        
-    user = (
-        db.query(UserModel)
-        .filter(UserModel.id == user_id)
-        .one_or_none()
-    )
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid access token",
-        )
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user",
-        )
-    if user.is_delete:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="this account is deleted cannot access",
-            )
-    return user
+    return authenticate(request, db).user
