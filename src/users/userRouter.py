@@ -55,11 +55,10 @@ def create_user(data: UserCreateSc, db: Session = Depends(get_db)):
     return user
 
 
-@router.post("/login2", deprecated=True, include_in_schema=False)
+
 @router.post("/login")
 def login_user(request: Request, response: Response,
                identifier: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    check_origin(request)
     user = find_user(identifier.username.strip(), db)
     if user is None or not user.verify_password(identifier.password):
         raise HTTPException(401, "Invalid username or password")
@@ -71,6 +70,11 @@ def login_user(request: Request, response: Response,
         raise HTTPException(409, "An active session already exists") from None
     set_auth_cookies(response, tokens, csrf)
     return tokens
+
+
+@router.post("/login-account")
+def login_account(username: OAuth2PasswordRequestForm, db: Session = Depends(get_db)):
+    user = find_user()
 
 
 @router.post("/token/refresh")
